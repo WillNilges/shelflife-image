@@ -32,6 +32,27 @@ RUN mkdir -p ${APP_ROOT} && \
 USER 10001
 WORKDIR ${APP_ROOT}
 
+
+FROM rust:1.40 as builder                                                       
+WORKDIR /usr/src/shelflife
+RUN apt-get update -y && apt-get install git
+RUN git clone https://github.com/willnilges/shelflife ./shelflife-src
+WORKDIR ./shelflife-src
+#COPY src ./src                                                                  
+#COPY Cargo.toml .                                                               
+#COPY Cargo.lock .                                                               
+RUN cargo install --path .                                                      
+FROM debian:buster-slim                                                         
+RUN apt-get update -y && apt-get install libssl-dev -y    
+WORKDIR /usr/local/bin                                                          
+COPY --from=builder /usr/local/cargo/bin/shelflife .                            
+#COPY .env . # FOOL! You assume there's a .env file?
+#COPY --from=builder /usr/local/cargo/bin/shelflife/.env.sample ./.env # Apparently this is forbidden?
+RUN apt-get update -y && apt-get install curl -y
+RUN curl https://raw.githubusercontent.com/WillNilges/ShelfLife/master/.env.sample -o .env
+#ENTRYPOINT ["./shelflife"]                                                      
+
+
 ### user name recognition at runtime w/ an arbitrary uid - for OpenShift deployments
 ENTRYPOINT [ "uid_entrypoint" ]
 # VOLUME ${APP_ROOT}/logs ${APP_ROOT}/data
