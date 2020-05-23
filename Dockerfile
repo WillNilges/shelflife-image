@@ -39,7 +39,7 @@ ENTRYPOINT [ "uid_entrypoint" ]
 CMD run
 
 FROM rust:1.40 as builder
-WORKDIR /usr/src/shelflife
+#WORKDIR /usr/src/shelflife # Root access is the OpenShift cluster's trigger.
 RUN apt-get update -y && apt-get install git
 RUN git clone https://github.com/willnilges/shelflife ./shelflife-src
 WORKDIR ./shelflife-src
@@ -50,7 +50,7 @@ WORKDIR ./shelflife-src
 RUN cargo install --path .
 FROM debian:buster-slim
 RUN apt-get update -y && apt-get install libssl-dev -y
-WORKDIR /usr/local/bin
+WORKDIR ../bin
 COPY --from=builder /usr/local/cargo/bin/shelflife .
 #COPY .env . # FOOL! You assume there's a .env file?
 #RUN apt-get update -y && apt-get install curl -y
