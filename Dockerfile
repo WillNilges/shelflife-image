@@ -32,6 +32,10 @@ RUN mkdir -p ${APP_ROOT} && \
 USER 10001
 WORKDIR ${APP_ROOT}
 
+### user name recognition at runtime w/ an arbitrary uid - for OpenShift deployments
+ENTRYPOINT [ "uid_entrypoint" ]
+# VOLUME ${APP_ROOT}/logs ${APP_ROOT}/data
+CMD run
 
 FROM rust:1.40 as builder                                                       
 WORKDIR ${APP_ROOT}/shelflife
@@ -51,11 +55,5 @@ COPY --from=builder /usr/local/cargo/bin/shelflife .
 RUN apt-get update -y && apt-get install curl -y
 RUN curl https://raw.githubusercontent.com/WillNilges/ShelfLife/master/.env.sample -o .env
 #ENTRYPOINT ["./shelflife"]                                                      
-
-
-### user name recognition at runtime w/ an arbitrary uid - for OpenShift deployments
-ENTRYPOINT [ "uid_entrypoint" ]
-# VOLUME ${APP_ROOT}/logs ${APP_ROOT}/data
-CMD run
 
 # ref: https://github.com/RHsyseng/container-rhel-examples/blob/master/starter-arbitrary-uid/Dockerfile.centos7
