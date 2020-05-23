@@ -6,6 +6,7 @@ MAINTAINER Will Nilges <will.nilges@gmail.com>
 ENV SUMMARY="ShelfLife on Alpine Image." \
     DESCRIPTION="Alpine Linux is a security-oriented, lightweight Linux distribution based on musl libc and busybox."
 
+
 ### Atomic/OpenShift Labels - https://github.com/projectatomic/ContainerApplicationGenericLabels
 LABEL name="https://github.com/jefferyb/openshift-base-images/alpine" \
       maintainer="jeffery.rukundo@gmail.com" \
@@ -39,24 +40,18 @@ ENTRYPOINT [ "uid_entrypoint" ]
 CMD run
 
 FROM rust:1.40 as builder
-#WORKDIR /usr/src/shelflife # Root access is the OpenShift cluster's trigger.
+WORKDIR ${APP_ROOT}/shelflife
 RUN apt-get update -y && apt-get install git
 RUN git clone https://github.com/willnilges/shelflife ./shelflife-src
 WORKDIR ./shelflife-src
-# Unnecessary because we're working directly inside the git repo.
 #COPY src ./src
 #COPY Cargo.toml .
 #COPY Cargo.lock .
 RUN cargo install --path .
 FROM debian:buster-slim
 RUN apt-get update -y && apt-get install libssl-dev -y
-WORKDIR ../bin
+WORKDIR ${APP_ROOT}/bin
 COPY --from=builder /usr/local/cargo/bin/shelflife .
-#COPY .env . # FOOL! You assume there's a .env file?
-#RUN apt-get update -y && apt-get install curl -y
-#RUN curl https://raw.githubusercontent.com/WillNilges/ShelfLife/master/.env.sample -o .env
-
 #ENTRYPOINT ["./shelflife"]
 
 # ref: https://github.com/RHsyseng/container-rhel-examples/blob/master/starter-arbitrary-uid/Dockerfile.centos7
-
