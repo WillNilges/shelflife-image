@@ -30,23 +30,6 @@ RUN mkdir -p ${APP_ROOT} && \
     chgrp -R 0 ${APP_ROOT} && \
     chmod -R g=u ${APP_ROOT} /etc/passwd
 
-FROM rust:1.40 as builder
-WORKDIR ${APP_ROOT}/shelflife
-RUN apt-get update -y && apt-get install git
-RUN git clone https://github.com/willnilges/shelflife ./shelflife-src
-WORKDIR ./shelflife-src
-#COPY src ./src
-#COPY Cargo.toml .
-#COPY Cargo.lock .
-RUN cargo install --path .
-FROM debian:buster-slim
-RUN apt-get update -y && apt-get install libssl-dev -y
-WORKDIR ${APP_ROOT}/bin
-COPY --from=builder /usr/local/cargo/bin/shelflife .
-#ENTRYPOINT ["./shelflife"]
-
-# ref: https://github.com/RHsyseng/container-rhel-examples/blob/master/starter-arbitrary-uid/Dockerfile.centos7
-
 ### Containers should NOT run as root as a good practice
 USER 10001
 WORKDIR ${APP_ROOT}
@@ -55,4 +38,21 @@ WORKDIR ${APP_ROOT}
 ENTRYPOINT [ "uid_entrypoint" ]
 # VOLUME ${APP_ROOT}/logs ${APP_ROOT}/data
 CMD run
+
+# ref: https://github.com/RHsyseng/container-rhel-examples/blob/master/starter-arbitrary-uid/Dockerfile.centos7
+
+FROM rust:1.40 as builder
+#WORKDIR ${APP_ROOT}/shelflife
+RUN apt-get update -y && apt-get install git
+RUN git clone https://github.com/willnilges/shelflife
+WORKDIR ./shelflife
+#COPY src ./src
+#COPY Cargo.toml .
+#COPY Cargo.lock .
+RUN cargo install --path .
+FROM debian:buster-slim
+RUN apt-get update -y && apt-get install libssl-dev -y
+#WORKDIR ${APP_ROOT}/bin
+COPY --from=builder /usr/local/cargo/bin/shelflife .
+#ENTRYPOINT ["./shelflife"]
 
